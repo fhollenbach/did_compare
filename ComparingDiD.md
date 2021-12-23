@@ -116,9 +116,9 @@ getdata <- function(i) {
   #keep what we need
   data %>% 
     # keep treated units and all units not treated within -5 to 5
-    filter(group == i | group > i + 5) %>% 
+    filter(group == i | group > i + 7) %>% 
     # keep just year -5 to 5
-    filter(year >= i - 5 & year <= i + 5) %>%
+    filter(year >= i - 7 & year <= i + 7) %>%
     # create an indicator for the dataset
     mutate(df = i) %>% 
     mutate(time_to_treatment = year - group) %>% 
@@ -139,7 +139,7 @@ twfe <- data %>%
   do(broom::tidy(feols(dep_var ~ + i(time_to_treatment, ref = c(-1, -1000)) | unit + year, 
                        data = ., cluster = ~state), conf.int = TRUE)) %>% 
   mutate(t =  as.double(str_replace_all(term, c("time_to_treatment::" = "", ":treated" = "")))) %>% 
-  filter(t >= -10 & t <=10) %>% 
+  filter(t > -8 & t < 8) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
   # add in data for year -1
   bind_rows(tibble(t = -1, estimate = 0, 
@@ -157,9 +157,8 @@ stacked <- stacked_data %>%
   # fit the model
   do(broom::tidy(feols(dep_var ~ i(time_to_treatment, ref = c(-1, -1000)) | unit^df + year^df, data = ., cluster = "bracket_df"),
                  conf.int = TRUE)) %>% 
-  filter(!(term %in% c("x1"))) %>% 
   mutate(t =  as.double(str_replace(term, "time_to_treatment::", ""))) %>% 
-  filter(t >= -10 & t <=10) %>% 
+  filter(t > -8 & t < 8) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
   # add in data for year -1
   bind_rows(tibble(t = -1, estimate = 0, 
@@ -179,7 +178,7 @@ SA <- data %>%
   mutate(t =  as.double(str_replace(term, "year::", "")),
          conf.low = estimate - (qnorm(0.975)*std.error),
          conf.high = estimate + (qnorm(0.975)*std.error)) %>% 
-  filter(t >= -10 & t <=10) %>% 
+  filter(t > -8 & t < 8) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
   mutate(method = "Sun & Abraham")
 ```
@@ -203,7 +202,7 @@ csa.est<- att_gt(yname= 'dep_var',
 CSA <- aggte(csa.est, type = "dynamic", na.rm = TRUE) %>% 
   tidy() %>% 
   rename(t = event.time) %>% 
-  filter(t >= -10 & t <=10) %>% 
+  filter(t > -8 & t < 8) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
   mutate(method = "CSA")
 ```
@@ -225,7 +224,7 @@ coef_imp <- did_imp %>%
   ) %>%
   mutate(method = "DID Imputation") %>% 
   select(c(t, estimate, conf.low, conf.high, method)) %>% 
-  filter(t >= -10 & t <= 10)
+  filter(t > -8 & t < 8)
 ```
 
 Next, we add the augmented synthetic control estimates for staggered
@@ -239,7 +238,7 @@ asyn_res <- multisynth(dep_var ~ treat,
                    data)
 
 asyn <- summary(asyn_res)$att %>% 
-  filter(Time > -10 & Time < 10 & (Level == 'Average')) %>%
+  filter(Time > -8 & Time < 8 & (Level == 'Average')) %>%
   rename(t = Time, estimate = Estimate, conf.low = lower_bound, conf.high = upper_bound) %>% 
   mutate(method = "Aug. Synth") %>% 
   select(c(t, estimate, conf.low, conf.high, method))
@@ -266,21 +265,21 @@ fect.res <- data %>%
     ## Criterion: Mean Squared Prediction Error
     ## Interactive fixed effects model...
     ## 
-    ##  r = 0; sigma2 = 0.25562; IC = -0.94501; PC = 0.24296; MSPE = 0.27595; GMSPE = 0.07940; Moment = 0.03510; MSPTATT = 0.00146; MSE = 0.24187*
-    ##  r = 1; sigma2 = 0.24633; IC = -0.56651; PC = 0.29181; MSPE = 0.31349; GMSPE = 0.08811; Moment = 0.04520; MSPTATT = 0.00135; MSE = 0.21658
-    ##  r = 2; sigma2 = 0.23744; IC = -0.19132; PC = 0.33697; MSPE = 0.35219; GMSPE = 0.10183; Moment = 0.04165; MSPTATT = 0.00133; MSE = 0.19432
-    ##  r = 3; sigma2 = 0.22901; IC = 0.18089; PC = 0.37881; MSPE = 0.40692; GMSPE = 0.10884; Moment = 0.04471; MSPTATT = 0.00115; MSE = 0.17337
-    ##  r = 4; sigma2 = 0.22226; IC = 0.55577; PC = 0.41996; MSPE = 0.46563; GMSPE = 0.11739; Moment = 0.08365; MSPTATT = 0.00083; MSE = 0.15694
-    ##  r = 5; sigma2 = 0.21580; IC = 0.92754; PC = 0.45865; MSPE = 0.54282; GMSPE = 0.15005; Moment = 0.06657; MSPTATT = 0.00069; MSE = 0.14020
+    ##  r = 0; sigma2 = 0.24868; IC = -0.98299; PC = 0.23671; MSPE = 0.24649; GMSPE = 0.06791; Moment = 0.05506; MSPTATT = 0.00221; MSE = 0.23648*
+    ##  r = 1; sigma2 = 0.24068; IC = -0.61054; PC = 0.28386; MSPE = 0.27212; GMSPE = 0.07254; Moment = 0.05273; MSPTATT = 0.00189; MSE = 0.21418
+    ##  r = 2; sigma2 = 0.23271; IC = -0.24254; PC = 0.32751; MSPE = 0.31739; GMSPE = 0.07795; Moment = 0.05142; MSPTATT = 0.00191; MSE = 0.19156
+    ##  r = 3; sigma2 = 0.22596; IC = 0.12619; PC = 0.36960; MSPE = 0.37184; GMSPE = 0.09157; Moment = 0.05182; MSPTATT = 0.00145; MSE = 0.17329
+    ##  r = 4; sigma2 = 0.21894; IC = 0.48931; PC = 0.40819; MSPE = 0.43924; GMSPE = 0.10808; Moment = 0.05712; MSPTATT = 0.00095; MSE = 0.15502
+    ##  r = 5; sigma2 = 0.21123; IC = 0.84472; PC = 0.44223; MSPE = 0.46994; GMSPE = 0.11416; Moment = 0.05996; MSPTATT = 0.00101; MSE = 0.13664
     ## 
     ##  r* = 0
     ## 
     ## Matrix completion method...
     ## 
-    ##  lambda.norm = 1.00000; MSPE = 0.27595; GMSPE = 0.07940; Moment = 0.03510; MSPTATT = 0.00146; MSE = 0.24187*
-    ##  lambda.norm = 0.42170; MSPE = 0.28407; GMSPE = 0.08072; Moment = 0.03502; MSPTATT = 0.00041; MSE = 0.07690
-    ##  lambda.norm = 0.17783; MSPE = 0.28739; GMSPE = 0.08513; Moment = 0.03329; MSPTATT = 0.00008; MSE = 0.01419
-    ##  lambda.norm = 0.07499; MSPE = 0.28564; GMSPE = 0.08614; Moment = 0.03276; MSPTATT = 0.00001; MSE = 0.00253
+    ##  lambda.norm = 1.00000; MSPE = 0.24649; GMSPE = 0.06791; Moment = 0.05506; MSPTATT = 0.00221; MSE = 0.23648*
+    ##  lambda.norm = 0.42170; MSPE = 0.25252; GMSPE = 0.07139; Moment = 0.05085; MSPTATT = 0.00073; MSE = 0.08617
+    ##  lambda.norm = 0.17783; MSPE = 0.26131; GMSPE = 0.07649; Moment = 0.05065; MSPTATT = 0.00013; MSE = 0.01581
+    ##  lambda.norm = 0.07499; MSPE = 0.25861; GMSPE = 0.07483; Moment = 0.05107; MSPTATT = 0.00002; MSE = 0.00282
     ## 
     ##  lambda.norm* = 1
     ## 
@@ -297,29 +296,62 @@ fect.res <- data %>%
     ## 
     ## ATT:
     ##                             ATT   S.E. CI.lower CI.upper p.value
-    ## Tr obs equally weighted   4.174 0.3177    3.551    4.796       0
-    ## Tr units equally weighted 3.163 0.2734    2.627    3.699       0
+    ## Tr obs equally weighted   3.696 0.3343    3.040    4.351       0
+    ## Tr units equally weighted 2.824 0.2585    2.318    3.331       0
 
 ``` r
 fect <- fect.res$est.att %>% 
   as_tibble() %>% 
   mutate(t = as.double(rownames(fect.res$est.att))) %>% 
-  filter(t > -10 & t < 10) %>% 
+  filter(t > -8 & t < 8) %>% 
   mutate(method = "FECT") %>% 
   rename(estimate = ATT, conf.low = CI.lower, conf.high = CI.upper) %>% 
   select(c(t, estimate, conf.low, conf.high, method))
 ```
 
+Lastly, we can use the `PanelMatch` package (Kim et al. 2021) to add the
+panel match estimator by Imai, Kim, and Wang (Forthcoming).
+
 ``` r
-coefs <- bind_rows(twfe, stacked, CSA, SA, coef_imp, asyn, fect) 
+PM_est <- PanelMatch(lag = 5, time.id = "year", unit.id = "unit", 
+                     treatment = "treat", refinement.method = "none", 
+                     data = as.data.frame(data), match.missing = TRUE, 
+                     size.match = 5, qoi = "att" , outcome.var = "dep_var",
+                     lead = 0:7, forbid.treatment.reversal = TRUE, 
+                     use.diagonal.variance.matrix = TRUE)
+PM_est <- PanelEstimate(sets = PM_est, data = as.data.frame(data))
+
+PM <- tibble(t = c(0, 1, 2, 3, 4, 5, 6, 7), estimate = summary(PM_est)$summary[, 1], conf.low = summary(PM_est)$summary[, 3], conf.high = summary(PM_est)$summary[, 4]) %>% 
+  select(t, estimate, conf.low, conf.high) %>% 
+  mutate(method = "Panel Match")
+```
+
+    ## Matches created with 5 lags
+    ## 
+    ## Standard errors computed with 1000 Weighted bootstrap samples
+    ## 
+    ## Estimate of Average Treatment Effect on the Treated (ATT) by Period:
+    ## Matches created with 5 lags
+    ## 
+    ## Standard errors computed with 1000 Weighted bootstrap samples
+    ## 
+    ## Estimate of Average Treatment Effect on the Treated (ATT) by Period:
+    ## Matches created with 5 lags
+    ## 
+    ## Standard errors computed with 1000 Weighted bootstrap samples
+    ## 
+    ## Estimate of Average Treatment Effect on the Treated (ATT) by Period:
+
+``` r
+coefs <- bind_rows(twfe, stacked, CSA, SA, coef_imp, asyn, fect, PM) 
 
 plot <- coefs %>% 
   ggplot(aes(x = t, y = estimate, color = method)) + 
-  geom_point(aes(x = t, y = estimate), position = position_dodge2(width = 0.75), size = 1) +
-  geom_linerange(aes(x = t, ymin = conf.low, ymax = conf.high), position = position_dodge2(width = 0.75), size = 0.75) +
+  geom_point(aes(x = t, y = estimate), position = position_dodge2(width = 0.8), size = 1) +
+  geom_linerange(aes(x = t, ymin = conf.low, ymax = conf.high), position = position_dodge2(width = 0.8), size = 0.75) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = .25, alpha = 0.75) + 
   geom_vline(xintercept = -0.5, linetype = "dashed", size = .25) +
-  scale_color_manual(name="Estimation Method", values= met.brewer("Austria", 7, "discrete")) +
+  scale_color_manual(name="Estimation Method", values= met.brewer("Cross", 8, "discrete")) +
   theme_clean() + theme(legend.position= 'bottom') +
   labs(title = 'Event Time Estimates', y="ATT", x = "Relative Time") + 
   guides(col = guide_legend(nrow = 3)) 
@@ -382,6 +414,23 @@ Differences.” <https://bcallaway11.github.io/did/>.
 ———. 2021b. “Difference-in-Differences with Multiple Time Periods.”
 *Journal of Econometrics*.
 <https://doi.org/10.1016/j.jeconom.2020.12.001>.
+
+</div>
+
+<div id="ref-imai.2021.matching" class="csl-entry">
+
+Imai, Kosuke, In Song Kim, and Erik Wang. Forthcoming. “Matching Methods
+for Causal Inference with Time-Series Cross-Sectional Data.” *American
+Journal of Political Science*, Forthcoming.
+[\\url{https://imai.fas.harvard.edu/research/tscs.html}](\url{https://imai.fas.harvard.edu/research/tscs.html}).
+
+</div>
+
+<div id="ref-kim.2021.panelmatch" class="csl-entry">
+
+Kim, In Song, Adam Rauh, Erik Wang, and Kosuke Imai. 2021. *PanelMatch:
+Matching Methods for Causal Inference with Time-Series Cross-Sectional
+Data*. <https://CRAN.R-project.org/package=PanelMatch>.
 
 </div>
 

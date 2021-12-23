@@ -122,9 +122,9 @@ getdata <- function(i) {
   #keep what we need
   data %>% 
     # keep treated units and all units not treated within -5 to 5
-    filter(group == i | group > i + 5) %>% 
+    filter(group == i | group > i + 7) %>% 
     # keep just year -5 to 5
-    filter(year >= i - 5 & year <= i + 5) %>%
+    filter(year >= i - 7 & year <= i + 7) %>%
     # create an indicator for the dataset
     mutate(df = i) %>% 
     mutate(time_to_treatment = year - group) %>% 
@@ -142,7 +142,7 @@ twfe <- data %>%
   do(broom::tidy(feols(dep_var ~ + i(time_to_treatment, ref = c(-1, -1000)) | unit + year, 
                        data = ., cluster = ~state), conf.int = TRUE)) %>% 
   mutate(t =  as.double(str_replace_all(term, c("time_to_treatment::" = "", ":treated" = "")))) %>% 
-  filter(t >= -10 & t <=10) %>% 
+  filter(t > -8 & t < 8) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
   # add in data for year -1
   bind_rows(tibble(t = -1, estimate = 0, 
@@ -157,9 +157,8 @@ stacked <- stacked_data %>%
   # fit the model
   do(broom::tidy(feols(dep_var ~ i(time_to_treatment, ref = c(-1, -1000)) | unit^df + year^df, data = ., cluster = "bracket_df"),
                  conf.int = TRUE)) %>% 
-  filter(!(term %in% c("x1"))) %>% 
   mutate(t =  as.double(str_replace(term, "time_to_treatment::", ""))) %>% 
-  filter(t >= -10 & t <=10) %>% 
+  filter(t > -8 & t < 8) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
   # add in data for year -1
   bind_rows(tibble(t = -1, estimate = 0, 
@@ -176,7 +175,7 @@ SA <- data %>%
   mutate(t =  as.double(str_replace(term, "year::", "")),
          conf.low = estimate - (qnorm(0.975)*std.error),
          conf.high = estimate + (qnorm(0.975)*std.error)) %>% 
-  filter(t >= -10 & t <=10) %>% 
+  filter(t > -8 & t < 8) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
   mutate(method = "Sun & Abraham")
 ```
@@ -196,7 +195,7 @@ csa.est<- att_gt(yname= 'dep_var',
 CSA <- aggte(csa.est, type = "dynamic", na.rm = TRUE) %>% 
   tidy() %>% 
   rename(t = event.time) %>% 
-  filter(t >= -10 & t <=10) %>% 
+  filter(t > -8 & t < 8) %>% 
   select(t, estimate, conf.low, conf.high) %>% 
   mutate(method = "CSA")
 ```
@@ -216,7 +215,7 @@ coef_imp <- did_imp %>%
   ) %>%
   mutate(method = "DID Imputation") %>% 
   select(c(t, estimate, conf.low, conf.high, method)) %>% 
-  filter(t >= -10 & t <= 10)
+  filter(t > -8 & t < 8)
 ```
 
 Next, we add the augmented synthetic control estimates for staggered adoption [@ben-michael.2021.augmented] using the `augsynth` package provided by @eli.2021.augsynth.
@@ -227,7 +226,7 @@ asyn_res <- multisynth(dep_var ~ treat,
                    data)
 
 asyn <- summary(asyn_res)$att %>% 
-  filter(Time > -10 & Time < 10 & (Level == 'Average')) %>%
+  filter(Time > -8 & Time < 8 & (Level == 'Average')) %>%
   rename(t = Time, estimate = Estimate, conf.low = lower_bound, conf.high = upper_bound) %>% 
   mutate(method = "Aug. Synth") %>% 
   select(c(t, estimate, conf.low, conf.high, method))
@@ -250,22 +249,36 @@ fect.res <- data %>%
 fect <- fect.res$est.att %>% 
   as_tibble() %>% 
   mutate(t = as.double(rownames(fect.res$est.att))) %>% 
-  filter(t > -10 & t < 10) %>% 
+  filter(t > -8 & t < 8) %>% 
   mutate(method = "FECT") %>% 
   rename(estimate = ATT, conf.low = CI.lower, conf.high = CI.upper) %>% 
   select(c(t, estimate, conf.low, conf.high, method))
 ```
+Lastly, we can use the `PanelMatch` package [@kim.2021.panelmatch] to add the panel match estimator by @imai.2021.matching.
+```{r panelmatch}
+PM_est <- PanelMatch(lag = 5, time.id = "year", unit.id = "unit", 
+                     treatment = "treat", refinement.method = "none", 
+                     data = as.data.frame(data), match.missing = TRUE, 
+                     size.match = 5, qoi = "att" , outcome.var = "dep_var",
+                     lead = 0:7, forbid.treatment.reversal = TRUE, 
+                     use.diagonal.variance.matrix = TRUE)
+PM_est <- PanelEstimate(sets = PM_est, data = as.data.frame(data))
+
+PM <- tibble(t = c(0, 1, 2, 3, 4, 5, 6, 7), estimate = summary(PM_est)$summary[, 1], conf.low = summary(PM_est)$summary[, 3], conf.high = summary(PM_est)$summary[, 4]) %>% 
+  select(t, estimate, conf.low, conf.high) %>% 
+  mutate(method = "Panel Match")
+```
 
 ```{r plot}
-coefs <- bind_rows(twfe, stacked, CSA, SA, coef_imp, asyn, fect) 
+coefs <- bind_rows(twfe, stacked, CSA, SA, coef_imp, asyn, fect, PM) 
 
 plot <- coefs %>% 
   ggplot(aes(x = t, y = estimate, color = method)) + 
-  geom_point(aes(x = t, y = estimate), position = position_dodge2(width = 0.75), size = 1) +
-  geom_linerange(aes(x = t, ymin = conf.low, ymax = conf.high), position = position_dodge2(width = 0.75), size = 0.75) +
+  geom_point(aes(x = t, y = estimate), position = position_dodge2(width = 0.8), size = 1) +
+  geom_linerange(aes(x = t, ymin = conf.low, ymax = conf.high), position = position_dodge2(width = 0.8), size = 0.75) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = .25, alpha = 0.75) + 
   geom_vline(xintercept = -0.5, linetype = "dashed", size = .25) +
-  scale_color_manual(name="Estimation Method", values= met.brewer("Austria", 7, "discrete")) +
+  scale_color_manual(name="Estimation Method", values= met.brewer("Cross", 8, "discrete")) +
   theme_clean() + theme(legend.position= 'bottom') +
   labs(title = 'Event Time Estimates', y="ATT", x = "Relative Time") + 
   guides(col = guide_legend(nrow = 3)) 
