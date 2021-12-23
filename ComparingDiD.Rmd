@@ -1,0 +1,272 @@
+---
+title: "Comparing Staggered DiD"
+author: "Florian M. Hollenbach"
+date:  "`r Sys.Date()`"
+output: html_document
+bibliography: "/Users/florianhollenbach/Dropbox (Personal)/Bibtex/fhollenbach_master.bib"
+---
+
+
+# Comparing different staggered Difference-in-Differences Estimators
+
+```{r setup, echo = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(did)
+library(didimputation)
+library(PanelMatch)
+library(fixest)
+library(broom)
+library(tidyverse)
+library(augsynth)
+library(panelView)
+library(fect)
+library(MetBrewer)
+
+
+theme_clean <- function() {
+  theme_minimal(base_family = "Barlow Semi Condensed") +
+    theme(panel.grid.minor = element_blank(),
+          plot.title = element_text(face = "bold", size=30),
+          plot.subtitle = element_text(size=25),
+          axis.title = element_text(family = "Barlow Semi Condensed Medium", face = "bold", size = 20),
+          axis.text = element_text(family = "Barlow Semi Condensed Medium", size = 15),
+          strip.text = element_text(family = "Barlow Semi Condensed",
+                                    face = "bold", size = rel(1), hjust = 0),
+          axis.title.y = element_text(angle = 90),
+          strip.background = element_rect(fill = "grey80", color = NA),
+          plot.caption = element_text(hjust = 0),
+          legend.text = element_text(family = "Barlow Semi Condensed Medium", size=15), 
+          legend.title = element_text(family = "Barlow Semi Condensed", size=20))
+}
+```
+
+First, we create a simulated data set, with staggered treatments, heterogeneous and dynamic treatment effects. The code is based on the simulations in @baker.2021.how, except we have a never-treated group and decreased the number of units.^[Thanks to Andrew Baker for sharing his code [here](https://github.com/andrewchbaker/DiD_Codes).]
+```{r sim data}
+# Data 6 - Multiple Treatment Periods and Dynamic Treatment Effects --------------
+make_data6 <- function(...) {
+  
+  # Fixed Effects ------------------------------------------------
+  # unit fixed effects
+  unit <- tibble(
+    unit = 1:200, 
+    unit_fe = rnorm(200, 0, 0.5),
+    # generate state
+    state = sample(1:50, 200, replace = TRUE),
+    # generate treatment groups
+    group = case_when(
+      state %in% 1:10 ~ 1989,
+      state %in% 11:20 ~ 1998,
+      state %in% 21:35 ~ NA_real_, ## never treated
+      state %in% 36:50 ~ 2005
+    ),
+    # avg yearly treatment effects by group
+    hat_gamma = case_when(
+      is.na(group) ~ 0, ## never treated
+      group == 1989 ~ .5,
+      group == 1998 ~ .3,
+      group == 2005 ~ .1
+    )) %>%
+    # generate unit specific yearly treatment effects 
+    rowwise() %>% 
+    mutate(gamma = if_else(is.na(group) == TRUE, 0, rnorm(1, hat_gamma, .2))) %>% 
+    ungroup()
+  
+  # year fixed effects 
+  year <- tibble(
+    year = 1980:2015,
+    year_fe = rnorm(36, 0, 0.5))
+  
+  # full interaction of unit X year 
+  crossing(unit, year) %>% 
+    # make error term and get treatment indicators and treatment effects
+    mutate(error = rnorm(nrow(.), 0, 0.5),
+           treat = ifelse(year >= group & is.na(group)==F, 1, 0), # 0 for ## never treated
+           tau = ifelse(treat == 1 & is.na(group)==F, gamma, 0)) %>% # 0 for ## never treated
+    # calculate the dep variable
+    group_by(unit) %>% 
+    mutate(cumtau = cumsum(tau)) %>% 
+    mutate(dep_var = unit_fe + year_fe + cumtau + error)
+}
+
+# make data
+#and treatment group variable for CSA
+data <- make_data6() %>% 
+  as_tibble() %>%
+  mutate(group_CSA = if_else(is.na(group), 0, group), # CSA wants never treated cohort variable to be 0
+         group = if_else(is.na(group), 10000, group), # never treated cohort variable 10000 for fixest
+         time_to_treatment = ifelse(group != 10000, year - group, -1000)) # set time to treatment to -1000 for fixest
+         
+```
+
+We can plot the data and treatment status using Licheng Liu and Yiqing Xu's awesome `panelView` package [@liu.2021.panelview]. 
+
+```{r plot treatment}
+panelView(dep_var ~ treat, data = data, index = c("unit","year"), xlab = "Year", ylab = "Unit", axis.lab.gap = 5)
+```
+Next, we create the stacked data set, once again following the code by [Andrew Baker](https://github.com/andrewchbaker/DiD_Codes). 
+
+
+```{r data}
+### for stacking
+groups <- data %>% 
+  filter(group != 10000) %>% 
+  pull(group) %>% 
+  unique()
+
+### create stacked data
+getdata <- function(i) {
+  
+  #keep what we need
+  data %>% 
+    # keep treated units and all units not treated within -5 to 5
+    filter(group == i | group > i + 5) %>% 
+    # keep just year -5 to 5
+    filter(year >= i - 5 & year <= i + 5) %>%
+    # create an indicator for the dataset
+    mutate(df = i) %>% 
+    mutate(time_to_treatment = year - group) %>% 
+    # make dummies
+    mutate(time_to_treatment = if_else(group == i, time_to_treatment, 0))
+}
+stacked_data <- map_df(groups, getdata) %>% 
+  mutate(bracket_df = paste(state,df))
+```
+
+Now we can move on to estimating the different models. First, the standard two-way fixed effects model with dynamic event time estimates. We estimate the model using the `fixest` package [@berge.2018.efficient] and extract the dynamic event time estimates.
+
+```{r twfe}
+twfe <- data %>% 
+  do(broom::tidy(feols(dep_var ~ + i(time_to_treatment, ref = c(-1, -1000)) | unit + year, 
+                       data = ., cluster = ~state), conf.int = TRUE)) %>% 
+  mutate(t =  as.double(str_replace_all(term, c("time_to_treatment::" = "", ":treated" = "")))) %>% 
+  filter(t >= -10 & t <=10) %>% 
+  select(t, estimate, conf.low, conf.high) %>% 
+  # add in data for year -1
+  bind_rows(tibble(t = -1, estimate = 0, 
+                   conf.low = 0, conf.high = 0
+  )) %>% 
+  mutate(method = "TWFE")
+```
+
+Next, the same model but on the stacked data. Following @baker.2021.how, we cluster standard errors at the unit$\times$dataset interaction.
+```{r stacked}
+stacked <- stacked_data %>% 
+  # fit the model
+  do(broom::tidy(feols(dep_var ~ i(time_to_treatment, ref = c(-1, -1000)) | unit^df + year^df, data = ., cluster = "bracket_df"),
+                 conf.int = TRUE)) %>% 
+  filter(!(term %in% c("x1"))) %>% 
+  mutate(t =  as.double(str_replace(term, "time_to_treatment::", ""))) %>% 
+  filter(t >= -10 & t <=10) %>% 
+  select(t, estimate, conf.low, conf.high) %>% 
+  # add in data for year -1
+  bind_rows(tibble(t = -1, estimate = 0, 
+                   conf.low = 0, conf.high = 0
+  )) %>% 
+  mutate(method = "Stacked")
+```
+We continue using the `fixest` package and its `sunab` function to estimate the dynamic effects using the Sun & Abraham method [@sun.2021.estimating].
+
+```{r Sun & Abraham}
+SA <- data %>% 
+  do(broom::tidy(feols(dep_var ~ sunab(group, year) | unit + year, data = .,
+                 cluster = ~ state))) %>% 
+  mutate(t =  as.double(str_replace(term, "year::", "")),
+         conf.low = estimate - (qnorm(0.975)*std.error),
+         conf.high = estimate + (qnorm(0.975)*std.error)) %>% 
+  filter(t >= -10 & t <=10) %>% 
+  select(t, estimate, conf.low, conf.high) %>% 
+  mutate(method = "Sun & Abraham")
+```
+
+
+The next model to estimate is the doubly-robust estimator developed by @callaway.2021.difference and available in the `did` package [@callaway.2021.did]. We use the `not-yet-treated` as the control group, standard errors are clustered at the treatment level (state).
+```{r CSA}
+csa.est<- att_gt(yname= 'dep_var',
+             tname= 'year',
+             idname = 'unit',
+             gname = 'group_CSA',
+             clustervars = 'state',
+             est_method = 'dr',
+             control_group = 'not-yet-treated',
+             data = data) 
+
+CSA <- aggte(csa.est, type = "dynamic", na.rm = TRUE) %>% 
+  tidy() %>% 
+  rename(t = event.time) %>% 
+  filter(t >= -10 & t <=10) %>% 
+  select(t, estimate, conf.low, conf.high) %>% 
+  mutate(method = "CSA")
+```
+
+Now we use the `didimputation` package written by Kyle Butts [butts.2021.didimputation] based on the paper by @borusyak.2021.revisiting.
+
+```{r did impute}
+did_imp <- did_imputation(data = data, yname = "dep_var", gname = "group_CSA",
+                          tname = "year", idname = "unit", 
+                          horizon=TRUE, pretrends = -10:-1) 
+coef_imp <- did_imp %>% 
+  select(t = term, estimate, std.error) %>%
+  mutate(
+    conf.low = estimate - 1.96 * std.error,
+    conf.high = estimate + 1.96 * std.error,
+    t = as.numeric(t)
+  ) %>%
+  mutate(method = "DID Imputation") %>% 
+  select(c(t, estimate, conf.low, conf.high, method)) %>% 
+  filter(t >= -10 & t <= 10)
+```
+
+Next, we add the augmented synthetic control estimates for staggered adoption [@ben-michael.2021.augmented] using the `augsynth` package provided by @eli.2021.augsynth.
+```{r augmented synthetic control}
+asyn_res <- multisynth(dep_var ~ treat,
+                   unit, 
+                   year, 
+                   data)
+
+asyn <- summary(asyn_res)$att %>% 
+  filter(Time > -10 & Time < 10 & (Level == 'Average')) %>%
+  rename(t = Time, estimate = Estimate, conf.low = lower_bound, conf.high = upper_bound) %>% 
+  mutate(method = "Aug. Synth") %>% 
+  select(c(t, estimate, conf.low, conf.high, method))
+```
+
+Lastly, we use the `fect` package by @liu.2021.fect and estimate a counterfactul estimator chosen via cross-validation [@liu.2021.practical].
+
+
+```{r fect}
+fect.res <- data %>% 
+  fect(dep_var ~ treat, data = ., 
+       index = c("unit","year"), 
+       method = "both",
+       CV = TRUE, 
+       se = TRUE, 
+       nboots = 500, 
+       parallel = TRUE, 
+       cv.treat = FALSE)
+
+fect <- fect.res$est.att %>% 
+  as_tibble() %>% 
+  mutate(t = as.double(rownames(fect.res$est.att))) %>% 
+  filter(t > -10 & t < 10) %>% 
+  mutate(method = "FECT") %>% 
+  rename(estimate = ATT, conf.low = CI.lower, conf.high = CI.upper) %>% 
+  select(c(t, estimate, conf.low, conf.high, method))
+```
+
+```{r plot}
+coefs <- bind_rows(twfe, stacked, CSA, SA, coef_imp, asyn, fect) 
+
+plot <- coefs %>% 
+  ggplot(aes(x = t, y = estimate, color = method)) + 
+  geom_point(aes(x = t, y = estimate), position = position_dodge2(width = 1), size = 1.5) +
+  geom_linerange(aes(x = t, ymin = conf.low, ymax = conf.high), position = position_dodge2(width = 1), size = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = .25, alpha = 0.75) + 
+  geom_vline(xintercept = -0.5, linetype = "dashed", size = .25) +
+  scale_color_manual(name="Estimation Method", values= met.brewer("Ingres", 7, "discrete")) +
+  theme_clean() + theme(legend.position= 'bottom') +
+  labs(title = 'Event Time Estimates', y="ATT", x = "Relative Time") + 
+  guides(col = guide_legend(nrow = 3)) 
+plot
+```
+
+
