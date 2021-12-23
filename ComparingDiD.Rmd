@@ -2,7 +2,7 @@
 title: "Comparing Staggered DiD"
 author: "Florian M. Hollenbach"
 date:  "`r Sys.Date()`"
-output: html_document
+output: rmarkdown::github_document
 bibliography: "/Users/florianhollenbach/Dropbox (Personal)/Bibtex/fhollenbach_master.bib"
 ---
 
