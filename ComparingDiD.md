@@ -5,6 +5,12 @@ Florian M. Hollenbach
 
 # Comparing different staggered Difference-in-Differences Estimators
 
+**Note: this is not supposed to be an evaluation of the different
+estimators/packages.**
+
+Let’s load packages and set up the ggplot theme, which is stolen from
+[Andrew Heiss](https://www.andrewheiss.com/).
+
     ## Loading required package: fixest
 
     ## ── Attaching packages ────────────────────────────────── tidyverse 1.3.1.9000 ──
@@ -260,21 +266,21 @@ fect.res <- data %>%
     ## Criterion: Mean Squared Prediction Error
     ## Interactive fixed effects model...
     ## 
-    ##  r = 0; sigma2 = 0.24222; IC = -0.99712; PC = 0.23017; MSPE = 0.24709; GMSPE = 0.06618; Moment = 0.07233; MSPTATT = 0.00220; MSE = 0.23251*
-    ##  r = 1; sigma2 = 0.23302; IC = -0.61861; PC = 0.27625; MSPE = 0.27944; GMSPE = 0.07793; Moment = 0.08554; MSPTATT = 0.00207; MSE = 0.20686
-    ##  r = 2; sigma2 = 0.22663; IC = -0.23278; PC = 0.32208; MSPE = 0.33906; GMSPE = 0.08744; Moment = 0.07140; MSPTATT = 0.00211; MSE = 0.18861
-    ##  r = 3; sigma2 = 0.21913; IC = 0.14362; PC = 0.36315; MSPE = 0.37461; GMSPE = 0.09406; Moment = 0.06142; MSPTATT = 0.00115; MSE = 0.16827
-    ##  r = 4; sigma2 = 0.21324; IC = 0.52281; PC = 0.40381; MSPE = 0.47464; GMSPE = 0.11494; Moment = 0.08073; MSPTATT = 0.00103; MSE = 0.15085
-    ##  r = 5; sigma2 = 0.20694; IC = 0.89573; PC = 0.44091; MSPE = 0.63652; GMSPE = 0.13871; Moment = 0.09578; MSPTATT = 0.00096; MSE = 0.13438
+    ##  r = 0; sigma2 = 0.25379; IC = -0.96213; PC = 0.24156; MSPE = 0.25526; GMSPE = 0.07352; Moment = 0.05304; MSPTATT = 0.00107; MSE = 0.24228*
+    ##  r = 1; sigma2 = 0.24502; IC = -0.59162; PC = 0.28905; MSPE = 0.29780; GMSPE = 0.07941; Moment = 0.06136; MSPTATT = 0.00098; MSE = 0.21752
+    ##  r = 2; sigma2 = 0.23688; IC = -0.22324; PC = 0.33351; MSPE = 0.38568; GMSPE = 0.08943; Moment = 0.06746; MSPTATT = 0.00084; MSE = 0.19708
+    ##  r = 3; sigma2 = 0.22810; IC = 0.13767; PC = 0.37331; MSPE = 0.45284; GMSPE = 0.10282; Moment = 0.07386; MSPTATT = 0.00078; MSE = 0.17498
+    ##  r = 4; sigma2 = 0.22079; IC = 0.50028; PC = 0.41191; MSPE = 0.48807; GMSPE = 0.11169; Moment = 0.09266; MSPTATT = 0.00074; MSE = 0.15660
+    ##  r = 5; sigma2 = 0.21440; IC = 0.86266; PC = 0.44921; MSPE = 0.54177; GMSPE = 0.13264; Moment = 0.09494; MSPTATT = 0.00057; MSE = 0.13846
     ## 
     ##  r* = 0
     ## 
     ## Matrix completion method...
     ## 
-    ##  lambda.norm = 1.00000; MSPE = 0.24709; GMSPE = 0.06618; Moment = 0.07233; MSPTATT = 0.00220; MSE = 0.23251*
-    ##  lambda.norm = 0.42170; MSPE = 0.26313; GMSPE = 0.07681; Moment = 0.07163; MSPTATT = 0.00066; MSE = 0.07581
-    ##  lambda.norm = 0.17783; MSPE = 0.26848; GMSPE = 0.07548; Moment = 0.07174; MSPTATT = 0.00012; MSE = 0.01397
-    ##  lambda.norm = 0.07499; MSPE = 0.26538; GMSPE = 0.07532; Moment = 0.07183; MSPTATT = 0.00002; MSE = 0.00249
+    ##  lambda.norm = 1.00000; MSPE = 0.25526; GMSPE = 0.07352; Moment = 0.05304; MSPTATT = 0.00107; MSE = 0.24228*
+    ##  lambda.norm = 0.42170; MSPE = 0.26323; GMSPE = 0.07527; Moment = 0.05627; MSPTATT = 0.00036; MSE = 0.08194
+    ##  lambda.norm = 0.17783; MSPE = 0.27379; GMSPE = 0.07779; Moment = 0.05590; MSPTATT = 0.00007; MSE = 0.01507
+    ##  lambda.norm = 0.07499; MSPE = 0.27120; GMSPE = 0.07630; Moment = 0.05564; MSPTATT = 0.00001; MSE = 0.00269
     ## 
     ##  lambda.norm* = 1
     ## 
@@ -291,8 +297,8 @@ fect.res <- data %>%
     ## 
     ## ATT:
     ##                             ATT   S.E. CI.lower CI.upper p.value
-    ## Tr obs equally weighted   3.916 0.3202    3.288    4.543       0
-    ## Tr units equally weighted 2.972 0.2689    2.445    3.499       0
+    ## Tr obs equally weighted   4.210 0.3410    3.541    4.878       0
+    ## Tr units equally weighted 3.073 0.2917    2.502    3.645       0
 
 ``` r
 fect <- fect.res$est.att %>% 

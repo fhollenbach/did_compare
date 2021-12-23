@@ -8,6 +8,9 @@ bibliography: "/Users/florianhollenbach/Dropbox (Personal)/Bibtex/fhollenbach_ma
 
 
 # Comparing different staggered Difference-in-Differences Estimators
+**Note: this is not supposed to be an evaluation of the different estimators/packages.**
+
+Let's load packages and set up the ggplot theme, which is stolen from [Andrew Heiss](https://www.andrewheiss.com/).
 
 ```{r setup, echo = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
