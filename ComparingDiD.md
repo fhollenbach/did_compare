@@ -260,21 +260,21 @@ fect.res <- data %>%
     ## Criterion: Mean Squared Prediction Error
     ## Interactive fixed effects model...
     ## 
-    ##  r = 0; sigma2 = 0.25051; IC = -0.94812; PC = 0.23754; MSPE = 0.26227; GMSPE = 0.07055; Moment = 0.08574; MSPTATT = 0.00188; MSE = 0.23588*
-    ##  r = 1; sigma2 = 0.24288; IC = -0.54666; PC = 0.28979; MSPE = 0.29731; GMSPE = 0.07408; Moment = 0.08829; MSPTATT = 0.00169; MSE = 0.21550
-    ##  r = 2; sigma2 = 0.23611; IC = -0.14622; PC = 0.33966; MSPE = 0.32355; GMSPE = 0.08421; Moment = 0.07890; MSPTATT = 0.00124; MSE = 0.19585
-    ##  r = 3; sigma2 = 0.22851; IC = 0.24607; PC = 0.38491; MSPE = 0.38873; GMSPE = 0.10249; Moment = 0.07450; MSPTATT = 0.00089; MSE = 0.17518
-    ##  r = 4; sigma2 = 0.22184; IC = 0.63773; PC = 0.42832; MSPE = 0.45627; GMSPE = 0.11388; Moment = 0.07846; MSPTATT = 0.00074; MSE = 0.15566
-    ##  r = 5; sigma2 = 0.21512; IC = 1.02454; PC = 0.46842; MSPE = 0.56980; GMSPE = 0.13456; Moment = 0.08316; MSPTATT = 0.00075; MSE = 0.13681
+    ##  r = 0; sigma2 = 0.24222; IC = -0.99712; PC = 0.23017; MSPE = 0.24709; GMSPE = 0.06618; Moment = 0.07233; MSPTATT = 0.00220; MSE = 0.23251*
+    ##  r = 1; sigma2 = 0.23302; IC = -0.61861; PC = 0.27625; MSPE = 0.27944; GMSPE = 0.07793; Moment = 0.08554; MSPTATT = 0.00207; MSE = 0.20686
+    ##  r = 2; sigma2 = 0.22663; IC = -0.23278; PC = 0.32208; MSPE = 0.33906; GMSPE = 0.08744; Moment = 0.07140; MSPTATT = 0.00211; MSE = 0.18861
+    ##  r = 3; sigma2 = 0.21913; IC = 0.14362; PC = 0.36315; MSPE = 0.37461; GMSPE = 0.09406; Moment = 0.06142; MSPTATT = 0.00115; MSE = 0.16827
+    ##  r = 4; sigma2 = 0.21324; IC = 0.52281; PC = 0.40381; MSPE = 0.47464; GMSPE = 0.11494; Moment = 0.08073; MSPTATT = 0.00103; MSE = 0.15085
+    ##  r = 5; sigma2 = 0.20694; IC = 0.89573; PC = 0.44091; MSPE = 0.63652; GMSPE = 0.13871; Moment = 0.09578; MSPTATT = 0.00096; MSE = 0.13438
     ## 
     ##  r* = 0
     ## 
     ## Matrix completion method...
     ## 
-    ##  lambda.norm = 1.00000; MSPE = 0.26227; GMSPE = 0.07055; Moment = 0.08574; MSPTATT = 0.00188; MSE = 0.23588*
-    ##  lambda.norm = 0.42170; MSPE = 0.28910; GMSPE = 0.07652; Moment = 0.08600; MSPTATT = 0.00049; MSE = 0.07138
-    ##  lambda.norm = 0.17783; MSPE = 0.29705; GMSPE = 0.07708; Moment = 0.08548; MSPTATT = 0.00009; MSE = 0.01314
-    ##  lambda.norm = 0.07499; MSPE = 0.29253; GMSPE = 0.07709; Moment = 0.08519; MSPTATT = 0.00002; MSE = 0.00234
+    ##  lambda.norm = 1.00000; MSPE = 0.24709; GMSPE = 0.06618; Moment = 0.07233; MSPTATT = 0.00220; MSE = 0.23251*
+    ##  lambda.norm = 0.42170; MSPE = 0.26313; GMSPE = 0.07681; Moment = 0.07163; MSPTATT = 0.00066; MSE = 0.07581
+    ##  lambda.norm = 0.17783; MSPE = 0.26848; GMSPE = 0.07548; Moment = 0.07174; MSPTATT = 0.00012; MSE = 0.01397
+    ##  lambda.norm = 0.07499; MSPE = 0.26538; GMSPE = 0.07532; Moment = 0.07183; MSPTATT = 0.00002; MSE = 0.00249
     ## 
     ##  lambda.norm* = 1
     ## 
@@ -291,8 +291,8 @@ fect.res <- data %>%
     ## 
     ## ATT:
     ##                             ATT   S.E. CI.lower CI.upper p.value
-    ## Tr obs equally weighted   4.154 0.2858    3.593    4.714       0
-    ## Tr units equally weighted 3.142 0.2527    2.647    3.637       0
+    ## Tr obs equally weighted   3.916 0.3202    3.288    4.543       0
+    ## Tr units equally weighted 2.972 0.2689    2.445    3.499       0
 
 ``` r
 fect <- fect.res$est.att %>% 
@@ -309,11 +309,11 @@ coefs <- bind_rows(twfe, stacked, CSA, SA, coef_imp, asyn, fect)
 
 plot <- coefs %>% 
   ggplot(aes(x = t, y = estimate, color = method)) + 
-  geom_point(aes(x = t, y = estimate), position = position_dodge2(width = 1), size = 1.5) +
-  geom_linerange(aes(x = t, ymin = conf.low, ymax = conf.high), position = position_dodge2(width = 1), size = 1) +
+  geom_point(aes(x = t, y = estimate), position = position_dodge2(width = 0.75), size = 1) +
+  geom_linerange(aes(x = t, ymin = conf.low, ymax = conf.high), position = position_dodge2(width = 0.75), size = 0.75) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = .25, alpha = 0.75) + 
   geom_vline(xintercept = -0.5, linetype = "dashed", size = .25) +
-  scale_color_manual(name="Estimation Method", values= met.brewer("Ingres", 7, "discrete")) +
+  scale_color_manual(name="Estimation Method", values= met.brewer("Hokusai1", 7, "discrete")) +
   theme_clean() + theme(legend.position= 'bottom') +
   labs(title = 'Event Time Estimates', y="ATT", x = "Relative Time") + 
   guides(col = guide_legend(nrow = 3)) 
