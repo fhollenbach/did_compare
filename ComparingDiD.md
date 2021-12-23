@@ -266,21 +266,21 @@ fect.res <- data %>%
     ## Criterion: Mean Squared Prediction Error
     ## Interactive fixed effects model...
     ## 
-    ##  r = 0; sigma2 = 0.25379; IC = -0.96213; PC = 0.24156; MSPE = 0.25526; GMSPE = 0.07352; Moment = 0.05304; MSPTATT = 0.00107; MSE = 0.24228*
-    ##  r = 1; sigma2 = 0.24502; IC = -0.59162; PC = 0.28905; MSPE = 0.29780; GMSPE = 0.07941; Moment = 0.06136; MSPTATT = 0.00098; MSE = 0.21752
-    ##  r = 2; sigma2 = 0.23688; IC = -0.22324; PC = 0.33351; MSPE = 0.38568; GMSPE = 0.08943; Moment = 0.06746; MSPTATT = 0.00084; MSE = 0.19708
-    ##  r = 3; sigma2 = 0.22810; IC = 0.13767; PC = 0.37331; MSPE = 0.45284; GMSPE = 0.10282; Moment = 0.07386; MSPTATT = 0.00078; MSE = 0.17498
-    ##  r = 4; sigma2 = 0.22079; IC = 0.50028; PC = 0.41191; MSPE = 0.48807; GMSPE = 0.11169; Moment = 0.09266; MSPTATT = 0.00074; MSE = 0.15660
-    ##  r = 5; sigma2 = 0.21440; IC = 0.86266; PC = 0.44921; MSPE = 0.54177; GMSPE = 0.13264; Moment = 0.09494; MSPTATT = 0.00057; MSE = 0.13846
+    ##  r = 0; sigma2 = 0.25562; IC = -0.94501; PC = 0.24296; MSPE = 0.27595; GMSPE = 0.07940; Moment = 0.03510; MSPTATT = 0.00146; MSE = 0.24187*
+    ##  r = 1; sigma2 = 0.24633; IC = -0.56651; PC = 0.29181; MSPE = 0.31349; GMSPE = 0.08811; Moment = 0.04520; MSPTATT = 0.00135; MSE = 0.21658
+    ##  r = 2; sigma2 = 0.23744; IC = -0.19132; PC = 0.33697; MSPE = 0.35219; GMSPE = 0.10183; Moment = 0.04165; MSPTATT = 0.00133; MSE = 0.19432
+    ##  r = 3; sigma2 = 0.22901; IC = 0.18089; PC = 0.37881; MSPE = 0.40692; GMSPE = 0.10884; Moment = 0.04471; MSPTATT = 0.00115; MSE = 0.17337
+    ##  r = 4; sigma2 = 0.22226; IC = 0.55577; PC = 0.41996; MSPE = 0.46563; GMSPE = 0.11739; Moment = 0.08365; MSPTATT = 0.00083; MSE = 0.15694
+    ##  r = 5; sigma2 = 0.21580; IC = 0.92754; PC = 0.45865; MSPE = 0.54282; GMSPE = 0.15005; Moment = 0.06657; MSPTATT = 0.00069; MSE = 0.14020
     ## 
     ##  r* = 0
     ## 
     ## Matrix completion method...
     ## 
-    ##  lambda.norm = 1.00000; MSPE = 0.25526; GMSPE = 0.07352; Moment = 0.05304; MSPTATT = 0.00107; MSE = 0.24228*
-    ##  lambda.norm = 0.42170; MSPE = 0.26323; GMSPE = 0.07527; Moment = 0.05627; MSPTATT = 0.00036; MSE = 0.08194
-    ##  lambda.norm = 0.17783; MSPE = 0.27379; GMSPE = 0.07779; Moment = 0.05590; MSPTATT = 0.00007; MSE = 0.01507
-    ##  lambda.norm = 0.07499; MSPE = 0.27120; GMSPE = 0.07630; Moment = 0.05564; MSPTATT = 0.00001; MSE = 0.00269
+    ##  lambda.norm = 1.00000; MSPE = 0.27595; GMSPE = 0.07940; Moment = 0.03510; MSPTATT = 0.00146; MSE = 0.24187*
+    ##  lambda.norm = 0.42170; MSPE = 0.28407; GMSPE = 0.08072; Moment = 0.03502; MSPTATT = 0.00041; MSE = 0.07690
+    ##  lambda.norm = 0.17783; MSPE = 0.28739; GMSPE = 0.08513; Moment = 0.03329; MSPTATT = 0.00008; MSE = 0.01419
+    ##  lambda.norm = 0.07499; MSPE = 0.28564; GMSPE = 0.08614; Moment = 0.03276; MSPTATT = 0.00001; MSE = 0.00253
     ## 
     ##  lambda.norm* = 1
     ## 
@@ -297,8 +297,8 @@ fect.res <- data %>%
     ## 
     ## ATT:
     ##                             ATT   S.E. CI.lower CI.upper p.value
-    ## Tr obs equally weighted   4.210 0.3410    3.541    4.878       0
-    ## Tr units equally weighted 3.073 0.2917    2.502    3.645       0
+    ## Tr obs equally weighted   4.174 0.3177    3.551    4.796       0
+    ## Tr units equally weighted 3.163 0.2734    2.627    3.699       0
 
 ``` r
 fect <- fect.res$est.att %>% 
@@ -319,7 +319,7 @@ plot <- coefs %>%
   geom_linerange(aes(x = t, ymin = conf.low, ymax = conf.high), position = position_dodge2(width = 0.75), size = 0.75) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = .25, alpha = 0.75) + 
   geom_vline(xintercept = -0.5, linetype = "dashed", size = .25) +
-  scale_color_manual(name="Estimation Method", values= met.brewer("Hokusai1", 7, "discrete")) +
+  scale_color_manual(name="Estimation Method", values= met.brewer("Austria", 7, "discrete")) +
   theme_clean() + theme(legend.position= 'bottom') +
   labs(title = 'Event Time Estimates', y="ATT", x = "Relative Time") + 
   guides(col = guide_legend(nrow = 3)) 

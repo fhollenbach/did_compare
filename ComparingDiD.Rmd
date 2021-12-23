@@ -265,7 +265,7 @@ plot <- coefs %>%
   geom_linerange(aes(x = t, ymin = conf.low, ymax = conf.high), position = position_dodge2(width = 0.75), size = 0.75) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = .25, alpha = 0.75) + 
   geom_vline(xintercept = -0.5, linetype = "dashed", size = .25) +
-  scale_color_manual(name="Estimation Method", values= met.brewer("Hokusai1", 7, "discrete")) +
+  scale_color_manual(name="Estimation Method", values= met.brewer("Austria", 7, "discrete")) +
   theme_clean() + theme(legend.position= 'bottom') +
   labs(title = 'Event Time Estimates', y="ATT", x = "Relative Time") + 
   guides(col = guide_legend(nrow = 3)) 
