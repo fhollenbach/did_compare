@@ -181,7 +181,7 @@ SA <- data %>%
 ```
 
 
-The next model to estimate is the doubly-robust estimator developed by @callaway.2021.difference and available in the `did` package [@callaway.2021.did]. We use the `not-yet-treated` as the control group, standard errors are clustered at the treatment level (state).
+The next model to estimate is the doubly-robust estimator developed by @callaway.2021.difference and available in the `did` package [@callaway.2021.did]. We use the `not-yet-treated` as the control group, standard errors are clustered at the treatment level (state). It should be noted that @callaway.2021.difference use simultaneous inference procedures which are robust to multiple testing but increase the size of confidence intervals.
 ```{r CSA}
 csa.est<- att_gt(yname= 'dep_var',
              tname= 'year',
