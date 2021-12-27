@@ -1,7 +1,7 @@
 Comparing Staggered DiD
 ================
 Florian M. Hollenbach
-2021-12-23
+2021-12-27
 
 # Comparing different staggered Difference-in-Differences Estimators
 
@@ -187,7 +187,9 @@ The next model to estimate is the doubly-robust estimator developed by
 Callaway and Sant’Anna (2021b) and available in the `did` package
 (Callaway and Sant’Anna 2021a). We use the `not-yet-treated` as the
 control group, standard errors are clustered at the treatment level
-(state).
+(state). It should be noted that Callaway and Sant’Anna (2021b) use
+simultaneous inference procedures which are robust to multiple testing
+but increase the size of confidence intervals.
 
 ``` r
 csa.est<- att_gt(yname= 'dep_var',
@@ -265,21 +267,21 @@ fect.res <- data %>%
     ## Criterion: Mean Squared Prediction Error
     ## Interactive fixed effects model...
     ## 
-    ##  r = 0; sigma2 = 0.24868; IC = -0.98299; PC = 0.23671; MSPE = 0.24649; GMSPE = 0.06791; Moment = 0.05506; MSPTATT = 0.00221; MSE = 0.23648*
-    ##  r = 1; sigma2 = 0.24068; IC = -0.61054; PC = 0.28386; MSPE = 0.27212; GMSPE = 0.07254; Moment = 0.05273; MSPTATT = 0.00189; MSE = 0.21418
-    ##  r = 2; sigma2 = 0.23271; IC = -0.24254; PC = 0.32751; MSPE = 0.31739; GMSPE = 0.07795; Moment = 0.05142; MSPTATT = 0.00191; MSE = 0.19156
-    ##  r = 3; sigma2 = 0.22596; IC = 0.12619; PC = 0.36960; MSPE = 0.37184; GMSPE = 0.09157; Moment = 0.05182; MSPTATT = 0.00145; MSE = 0.17329
-    ##  r = 4; sigma2 = 0.21894; IC = 0.48931; PC = 0.40819; MSPE = 0.43924; GMSPE = 0.10808; Moment = 0.05712; MSPTATT = 0.00095; MSE = 0.15502
-    ##  r = 5; sigma2 = 0.21123; IC = 0.84472; PC = 0.44223; MSPE = 0.46994; GMSPE = 0.11416; Moment = 0.05996; MSPTATT = 0.00101; MSE = 0.13664
+    ##  r = 0; sigma2 = 0.24594; IC = -0.98374; PC = 0.23377; MSPE = 0.25846; GMSPE = 0.06675; Moment = 0.05937; MSPTATT = 0.00123; MSE = 0.23419*
+    ##  r = 1; sigma2 = 0.23805; IC = -0.60102; PC = 0.28198; MSPE = 0.29146; GMSPE = 0.07945; Moment = 0.06798; MSPTATT = 0.00127; MSE = 0.21116
+    ##  r = 2; sigma2 = 0.23098; IC = -0.21938; PC = 0.32776; MSPE = 0.34917; GMSPE = 0.09068; Moment = 0.06388; MSPTATT = 0.00090; MSE = 0.19200
+    ##  r = 3; sigma2 = 0.22354; IC = 0.15610; PC = 0.36970; MSPE = 0.43069; GMSPE = 0.10096; Moment = 0.07597; MSPTATT = 0.00096; MSE = 0.17147
+    ##  r = 4; sigma2 = 0.21703; IC = 0.53122; PC = 0.41001; MSPE = 0.48773; GMSPE = 0.11763; Moment = 0.07404; MSPTATT = 0.00098; MSE = 0.15237
+    ##  r = 5; sigma2 = 0.20927; IC = 0.89591; PC = 0.44468; MSPE = 0.53300; GMSPE = 0.14317; Moment = 0.07045; MSPTATT = 0.00071; MSE = 0.13361
     ## 
     ##  r* = 0
     ## 
     ## Matrix completion method...
     ## 
-    ##  lambda.norm = 1.00000; MSPE = 0.24649; GMSPE = 0.06791; Moment = 0.05506; MSPTATT = 0.00221; MSE = 0.23648*
-    ##  lambda.norm = 0.42170; MSPE = 0.25252; GMSPE = 0.07139; Moment = 0.05085; MSPTATT = 0.00073; MSE = 0.08617
-    ##  lambda.norm = 0.17783; MSPE = 0.26131; GMSPE = 0.07649; Moment = 0.05065; MSPTATT = 0.00013; MSE = 0.01581
-    ##  lambda.norm = 0.07499; MSPE = 0.25861; GMSPE = 0.07483; Moment = 0.05107; MSPTATT = 0.00002; MSE = 0.00282
+    ##  lambda.norm = 1.00000; MSPE = 0.25846; GMSPE = 0.06675; Moment = 0.05937; MSPTATT = 0.00123; MSE = 0.23419*
+    ##  lambda.norm = 0.42170; MSPE = 0.27182; GMSPE = 0.07157; Moment = 0.06584; MSPTATT = 0.00038; MSE = 0.07751
+    ##  lambda.norm = 0.17783; MSPE = 0.28195; GMSPE = 0.07701; Moment = 0.06617; MSPTATT = 0.00007; MSE = 0.01424
+    ##  lambda.norm = 0.07499; MSPE = 0.27824; GMSPE = 0.07668; Moment = 0.06540; MSPTATT = 0.00001; MSE = 0.00254
     ## 
     ##  lambda.norm* = 1
     ## 
@@ -296,8 +298,8 @@ fect.res <- data %>%
     ## 
     ## ATT:
     ##                             ATT   S.E. CI.lower CI.upper p.value
-    ## Tr obs equally weighted   3.696 0.3343    3.040    4.351       0
-    ## Tr units equally weighted 2.824 0.2585    2.318    3.331       0
+    ## Tr obs equally weighted   4.214 0.3575    3.514    4.915       0
+    ## Tr units equally weighted 3.180 0.3016    2.588    3.771       0
 
 ``` r
 fect <- fect.res$est.att %>% 
